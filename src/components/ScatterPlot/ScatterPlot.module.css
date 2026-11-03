@@ -1,0 +1,151 @@
+.wrap {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  aspect-ratio: 1 / 1;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  display: block;
+}
+
+.tool_add,
+.tool_spray {
+  cursor: crosshair;
+}
+
+.tool_erase {
+  cursor: cell;
+}
+
+.bg {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 2;
+}
+
+.grid line {
+  stroke: var(--grid);
+  stroke-width: 1;
+}
+
+.point {
+  stroke: var(--surface);
+  stroke-width: 1.5;
+  transition:
+    fill var(--anim) ease,
+    r var(--anim) ease;
+}
+
+.noise {
+  fill: none !important;
+  stroke-width: 2.5;
+  opacity: 0.9;
+}
+
+.movingPoint {
+  transition: transform var(--anim) ease-in-out;
+}
+
+.highlight {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2.5;
+  opacity: 0.85;
+}
+
+.overlay_focus {
+  fill: var(--focus-fill);
+  stroke: var(--focus);
+  stroke-width: 3;
+  stroke-dasharray: 10 7;
+}
+
+.overlay_muted,
+.overlay_cluster {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
+}
+
+.line_focus {
+  stroke: var(--focus);
+  stroke-width: 4;
+  stroke-dasharray: 12 8;
+}
+
+.line_cluster,
+.line_muted {
+  stroke: var(--muted);
+  stroke-width: 3;
+  stroke-dasharray: 6 6;
+}
+
+.ellipse {
+  fill-opacity: 0.1;
+  stroke-width: 3;
+  transition:
+    transform var(--anim) ease-in-out,
+    rx var(--anim) ease-in-out,
+    ry var(--anim) ease-in-out;
+}
+
+.centroid {
+  transition: transform var(--anim) ease-in-out;
+  pointer-events: none;
+}
+
+.centroidHalo {
+  fill: var(--surface);
+  opacity: 0.75;
+  stroke: var(--text);
+  stroke-width: 2;
+}
+
+.centroidCrossBg {
+  stroke: var(--surface);
+  stroke-width: 11;
+  stroke-linecap: round;
+}
+
+.centroidCross {
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.trails line {
+  stroke: var(--muted);
+  stroke-width: 1;
+  opacity: 0.35;
+}
+
+.origin {
+  fill: var(--muted);
+  opacity: 0.35;
+}
+
+.emptyText {
+  fill: var(--muted);
+  font-size: 34px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .point,
+  .movingPoint,
+  .ellipse,
+  .centroid {
+    transition: none;
+  }
+}

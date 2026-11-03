@@ -1,0 +1,191 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.subTitle {
+  margin-top: 6px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 0.9rem;
+  color: var(--text-2);
+}
+
+.sliderHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.field input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+  height: 28px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.inline input {
+  width: 6em;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.button,
+.buttonGhost {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.button:hover {
+  background: var(--accent-strong);
+}
+
+.buttonGhost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.buttonGhost:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.buttonGhost:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.segment {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.segment button {
+  min-height: 44px;
+  border: none;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.segment button + button {
+  border-left: 1px solid var(--border);
+}
+
+.segment .segmentOn {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+.algoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.algoGrid button {
+  min-height: 44px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
+
+.algoGrid button:hover:not(.algoOn) {
+  background: var(--hover);
+}
+
+.algoGrid .algoOn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+.warning {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}

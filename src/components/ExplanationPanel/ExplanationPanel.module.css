@@ -1,0 +1,100 @@
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.message {
+  margin: 0;
+  min-height: 4.4em;
+  line-height: 1.55;
+  font-size: 0.98rem;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.stats div {
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.stats dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.stats dd {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.code {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.code li {
+  display: flex;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+  transition: background 0.2s;
+}
+
+.lineNo {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 1.2em;
+  text-align: right;
+}
+
+.lineText {
+  white-space: pre-wrap;
+}
+
+.code .codeOn {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+  font-weight: 700;
+}
+
+.about summary {
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 28px;
+}
+
+.about h3 {
+  margin: 8px 0 0;
+  font-size: 0.92rem;
+}
+
+.about ul {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}

@@ -1,0 +1,92 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.buttons button {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.15rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.buttons button:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.buttons button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.buttons .play {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  min-width: 56px;
+}
+
+.buttons .play:hover:not(:disabled) {
+  background: var(--accent-strong);
+}
+
+.timeline {
+  flex: 1 1 200px;
+  min-width: 140px;
+  accent-color: var(--accent);
+  height: 28px;
+}
+
+.counter {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  min-width: 7.5em;
+  text-align: right;
+}
+
+.speed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.speed select {
+  min-height: 36px;
+}
+
+/* 휴대폰: 버튼·단계·속도 한 줄, 타임라인은 아래 줄 전체 */
+@media (max-width: 760px) {
+  .bar {
+    gap: 6px 10px;
+    padding: 8px 12px;
+  }
+
+  .timeline {
+    order: 5;
+    flex-basis: 100%;
+  }
+
+  .counter {
+    min-width: 0;
+    margin-left: auto;
+  }
+
+  .speedText {
+    display: none;
+  }
+}

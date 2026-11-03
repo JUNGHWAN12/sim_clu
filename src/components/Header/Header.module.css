@@ -1,0 +1,51 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--header);
+  color: var(--on-header);
+  flex-wrap: wrap;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  font-size: 1.4rem;
+  color: #f2c14e;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.actions button {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.actions button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.actions button[aria-pressed='true'] {
+  background: #f2c14e;
+  border-color: #f2c14e;
+  color: #1f2a44;
+  font-weight: 700;
+}

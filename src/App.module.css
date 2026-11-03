@@ -1,0 +1,119 @@
+/* 넓은 화면(데스크톱, 프로젝터): 3단 고정 레이아웃 */
+.app {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.main {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr) 330px;
+  gap: 12px;
+  padding: 12px;
+  min-height: 0;
+}
+
+.left,
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: 4px;
+}
+
+.center {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.center > :first-child {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* 넓은 화면에서는 오른쪽 패널에 설명이 있으므로 숨김 */
+.caption {
+  display: none;
+  margin: 0;
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  line-height: 1.5;
+  font-size: 0.95rem;
+  min-height: 3.2em;
+}
+
+.controls {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+}
+
+/* 태블릿(가로) 등 중간 화면: 설정 | 캔버스, 설명은 아래 */
+@media (max-width: 1279px) {
+  .app {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .main {
+    grid-template-columns: 290px minmax(0, 1fr);
+  }
+
+  .left {
+    overflow: visible;
+  }
+
+  .center {
+    height: min(calc(100vw - 330px + 6em), calc(100dvh - 156px));
+    position: sticky;
+    top: 12px;
+  }
+
+  .caption {
+    display: block;
+  }
+
+  .right {
+    grid-column: 1 / -1;
+    overflow: visible;
+  }
+
+  .right > div {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    align-items: start;
+  }
+}
+
+/* 태블릿(세로)·휴대폰: 한 줄로 쌓기, 캔버스를 맨 위에 */
+@media (max-width: 760px) {
+  .main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .center {
+    order: -1;
+    height: auto;
+    position: static;
+  }
+
+  .center > :first-child {
+    flex: none;
+    height: min(calc(100vw - 24px), 62vh);
+  }
+
+  .right {
+    grid-column: auto;
+  }
+}
