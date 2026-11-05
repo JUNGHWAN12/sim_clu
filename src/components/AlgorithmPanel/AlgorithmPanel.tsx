@@ -56,6 +56,51 @@ function ParamControl({ spec, value }: { spec: ParamSpec; value: number | string
   );
 }
 
+/** K-Means '직접 지정' 초기화 안내와 버튼 */
+function ManualCentroidBox({ k }: { k: number }) {
+  const count = useSim((s) => s.manualCentroids.length);
+  const placing = useSim((s) => s.tool === 'centroid');
+  const { setTool, clearCentroids } = useSim.getState();
+  const done = count >= k;
+  return (
+    <div className={styles.manualBox}>
+      <div className={styles.row}>
+        <strong>
+          중심점 {count} / {k}개
+        </strong>
+        <span className={done ? styles.badgeDone : styles.badgeTodo}>
+          {done ? '준비 완료' : '놓는 중'}
+        </span>
+      </div>
+      <p className={styles.hint}>
+        {placing
+          ? done
+            ? '중심을 끌어서 옮기거나, 눌러서 지울 수 있습니다. ▶를 눌러 실행해 보세요.'
+            : `캔버스를 눌러 중심점을 ${k - count}개 더 놓아 주세요.`
+          : '점 그리기 도구를 쓰는 중입니다. 아래 버튼을 눌러 다시 중심을 놓을 수 있습니다.'}
+      </p>
+      <div className={styles.row}>
+        <button
+          type="button"
+          className={placing ? styles.button : styles.buttonGhost}
+          aria-pressed={placing}
+          onClick={() => setTool(placing ? 'add' : 'centroid')}
+        >
+          📍 중심 놓기 {placing ? '켜짐' : '꺼짐'}
+        </button>
+        <button
+          type="button"
+          className={styles.buttonGhost}
+          onClick={clearCentroids}
+          disabled={count === 0}
+        >
+          모두 지우기
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function AlgorithmPanel() {
   const algorithmId = useSim((s) => s.algorithmId);
   const params = useSim((s) => s.params[s.algorithmId]);
@@ -63,7 +108,8 @@ export function AlgorithmPanel() {
   const truncated = useSim((s) => s.truncated);
   const { setAlgorithm, rerun } = useSim.getState();
   const algo = ALGORITHM_MAP[algorithmId];
-  const usesRandom = ['kmeans', 'kmeanspp', 'gmm'].includes(algorithmId);
+  const manual = algorithmId === 'kmeans' && params.init === 'manual';
+  const usesRandom = ['kmeans', 'kmeanspp', 'gmm'].includes(algorithmId) && !manual;
 
   return (
     <section className={styles.panel} aria-labelledby="algo-title">
@@ -90,6 +136,8 @@ export function AlgorithmPanel() {
       {algo.params.map((spec) => (
         <ParamControl key={`${algorithmId}-${spec.key}`} spec={spec} value={params[spec.key]} />
       ))}
+
+      {manual && <ManualCentroidBox k={Number(params.k)} />}
 
       {usesRandom && (
         <button

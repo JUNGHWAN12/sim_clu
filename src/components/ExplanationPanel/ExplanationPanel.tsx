@@ -56,6 +56,12 @@ export function ExplanationPanel() {
     [isLast, step, points],
   );
 
+  const manual = useSim((s) => s.algorithmId === 'kmeans' && s.params.kmeans.init === 'manual');
+  const legend = [
+    ...(LEGEND[algorithmId] ?? []),
+    ...(manual ? [{ mark: '◌', text: '번호 붙은 점선 원: 직접 놓은 시작 위치' }] : []),
+  ];
+
   const clusters = step ? countClusters(step.labels) : 0;
   let noise = 0;
   if (step?.roles) for (const r of step.roles) if (r === ROLE.NOISE) noise++;
@@ -86,7 +92,7 @@ export function ExplanationPanel() {
           </div>
         </dl>
         <ul className={styles.legend}>
-          {LEGEND[algorithmId]?.map((l) => (
+          {legend.map((l) => (
             <li key={l.text}>
               <span aria-hidden="true">{l.mark}</span> {l.text}
             </li>

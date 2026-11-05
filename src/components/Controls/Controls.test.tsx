@@ -61,6 +61,38 @@ describe('상태 저장소', () => {
     expect(useSim.getState().blocked).toMatch(/300개/);
   });
 
+  it('직접 지정: 초기화 방식을 고르면 중심 놓기 모드가 켜지고, K개를 놓으면 실행된다', () => {
+    const s = useSim.getState();
+    s.setParam('init', 'manual');
+    expect(useSim.getState().tool).toBe('centroid');
+    expect(useSim.getState().steps).toHaveLength(1);
+    s.addCentroid({ x: 0.2, y: 0.2 });
+    s.addCentroid({ x: 0.5, y: 0.5 });
+    expect(useSim.getState().steps[0].kind).toBe('await-manual');
+    s.addCentroid({ x: 0.8, y: 0.8 });
+    s.addCentroid({ x: 0.9, y: 0.9 }); // K(3)개를 넘으면 무시
+    expect(useSim.getState().manualCentroids).toHaveLength(3);
+    expect(useSim.getState().steps.length).toBeGreaterThan(2);
+    expect(useSim.getState().steps[0].kind).toBe('init');
+  });
+
+  it('직접 지정: 중심 옮기기·지우기, K를 줄이면 넘치는 중심은 버린다', () => {
+    const s = useSim.getState();
+    s.setParam('init', 'manual');
+    s.addCentroid({ x: 0.2, y: 0.2 });
+    s.addCentroid({ x: 0.5, y: 0.5 });
+    s.addCentroid({ x: 0.8, y: 0.8 });
+    s.moveCentroid(1, { x: 0.4, y: 0.6 });
+    expect(useSim.getState().manualCentroids[1]).toEqual({ x: 0.4, y: 0.6 });
+    expect(useSim.getState().steps[0].centroids![1]).toEqual({ x: 0.4, y: 0.6 });
+    s.removeCentroid(0);
+    expect(useSim.getState().manualCentroids).toHaveLength(2);
+    s.setParam('k', 1);
+    expect(useSim.getState().manualCentroids).toHaveLength(1);
+    s.setParam('init', 'random');
+    expect(useSim.getState().tool).toBe('add');
+  });
+
   it('점을 찍으면 다시 계산하고 0단계로 돌아간다', () => {
     const s = useSim.getState();
     s.seek(2);

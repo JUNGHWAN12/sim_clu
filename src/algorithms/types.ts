@@ -73,7 +73,17 @@ export interface Step {
   dendrogram?: DendrogramState;
 }
 
-export type AlgorithmRun<P> = (points: Point[], params: P, rng: Rng) => Generator<Step, void, void>;
+/** 파라미터 외에 알고리즘에 넘겨주는 값 (예: 사용자가 직접 놓은 중심점) */
+export interface RunContext {
+  manualCentroids: Point[];
+}
+
+export type AlgorithmRun<P> = (
+  points: Point[],
+  params: P,
+  rng: Rng,
+  ctx: RunContext,
+) => Generator<Step, void, void>;
 
 export type ParamSpec =
   | {

@@ -6,7 +6,9 @@ import type { Overlay, Point, Step } from './types';
 
 export interface KMeansParams {
   k: number;
-  init: 'random' | 'kmeans++';
+  init: 'random' | 'kmeans++' | 'manual';
+  /** init이 'manual'일 때 사용자가 놓은 중심점 */
+  manualCentroids?: Point[];
   maxIter: number;
 }
 
@@ -116,20 +118,36 @@ export function* kmeans(
   const lineOffset = detailedInit ? 4 : 0; // K-Means++ 의사코드는 앞에 4줄이 더 있음
 
   let centroids: Point[];
-  if (params.init === 'kmeans++') {
+  let initMessage: string;
+  if (params.init === 'manual') {
+    const placed = (params.manualCentroids ?? []).slice(0, params.k);
+    if (placed.length < params.k) {
+      // 중심이 다 놓일 때까지는 이 안내 단계 하나만 보여 줌
+      yield {
+        kind: 'await-manual',
+        labels: unassigned(n),
+        centroids: placed.map((c) => ({ ...c })),
+        message: `캔버스를 눌러 중심점을 놓아 주세요. (${placed.length} / ${params.k}개) 놓은 중심은 끌어서 옮기거나 다시 눌러 지울 수 있습니다.`,
+        codeLine: 0,
+      };
+      return;
+    }
+    centroids = placed.map((c) => ({ ...c }));
+    initMessage = `직접 놓은 중심 ${params.k}개에서 시작합니다. 위치를 바꾸면 결과가 어떻게 달라지는지 비교해 보세요.`;
+  } else if (params.init === 'kmeans++') {
     centroids = yield* kmeansPlusPlusInit(points, k, rng, detailedInit);
+    initMessage = `K-Means++ 방식으로 중심 ${k}개를 배치했습니다.`;
   } else {
     centroids = randomInit(points, k, rng);
+    initMessage = `데이터 중에서 무작위로 중심 ${k}개를 골랐습니다.`;
   }
+  const kk = centroids.length;
 
   yield {
     kind: 'init',
     labels: unassigned(n),
     centroids: centroids.map((c) => ({ ...c })),
-    message:
-      params.init === 'kmeans++'
-        ? `K-Means++ 방식으로 중심 ${k}개를 배치했습니다.`
-        : `데이터 중에서 무작위로 중심 ${k}개를 골랐습니다.`,
+    message: initMessage,
     codeLine: detailedInit ? 3 : 0,
   };
 
@@ -170,9 +188,9 @@ export function* kmeans(
     };
 
     // 중심 이동
-    const sumX = new Float64Array(k);
-    const sumY = new Float64Array(k);
-    const cnt = new Int32Array(k);
+    const sumX = new Float64Array(kk);
+    const sumY = new Float64Array(kk);
+    const cnt = new Int32Array(kk);
     for (let i = 0; i < n; i++) {
       sumX[labels[i]] += points[i].x;
       sumY[labels[i]] += points[i].y;

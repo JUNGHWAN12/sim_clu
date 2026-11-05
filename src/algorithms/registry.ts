@@ -21,6 +21,7 @@ export const ALGORITHMS: AlgorithmDef[] = [
         options: [
           { value: 'random', label: '무작위' },
           { value: 'kmeans++', label: 'K-Means++' },
+          { value: 'manual', label: '직접 지정 (캔버스에 놓기)' },
         ],
       },
       { key: 'maxIter', label: '최대 반복 횟수', type: 'int', min: 1, max: 100, step: 1 },
@@ -28,7 +29,12 @@ export const ALGORITHMS: AlgorithmDef[] = [
     defaults: { k: 3, init: 'random', maxIter: 50 },
     maxPoints: 1500,
     metric: { key: 'sse', label: 'SSE (군집 내 거리 제곱합)' },
-    run: (points, p, rng) => kmeans(points, p as unknown as KMeansParams, rng),
+    run: (points, p, rng, ctx) =>
+      kmeans(
+        points,
+        { ...(p as unknown as KMeansParams), manualCentroids: ctx.manualCentroids },
+        rng,
+      ),
   },
   {
     id: 'kmeanspp',

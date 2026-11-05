@@ -1,7 +1,7 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { Overlay, Point, Step } from '../../algorithms/types';
 import { ROLE } from '../../algorithms/types';
-import { BASE_INTERVAL, useSim } from '../../store/useSim';
+import { BASE_INTERVAL, CENTROID_HIT_RADIUS, useSim } from '../../store/useSim';
 import { clusterColor, mixColor, symbolPath, UNASSIGNED } from '../../styles/palette';
 import styles from './ScatterPlot.module.css';
 
@@ -61,6 +61,33 @@ function Centroid({ p, label }: { p: Point; label: number }) {
         className={styles.centroidCross}
         style={{ stroke: c }}
       />
+    </g>
+  );
+}
+
+/** 직접 놓은 중심점 표시 (번호가 붙은 점선 원). 끌어서 옮길 수 있다 */
+function CentroidPin({
+  p,
+  index,
+  editable,
+  dragging,
+}: {
+  p: Point;
+  index: number;
+  editable: boolean;
+  dragging: boolean;
+}) {
+  const c = clusterColor(index);
+  return (
+    <g
+      className={`${styles.pin} ${editable ? styles.pinEditable : ''} ${dragging ? styles.pinDragging : ''}`}
+      transform={`translate(${p.x * S}, ${p.y * S})`}
+    >
+      <circle r={26} className={styles.pinRing} style={{ stroke: c }} />
+      <circle r={13} className={styles.pinBadge} style={{ fill: c }} cx={22} cy={-22} />
+      <text x={22} y={-22} className={styles.pinText}>
+        {index + 1}
+      </text>
     </g>
   );
 }
@@ -129,9 +156,34 @@ export function ScatterPlot() {
   const shapes = useSim((s) => s.shapes);
   const addPoint = useSim((s) => s.addPoint);
   const removeNear = useSim((s) => s.removeNear);
+  const manualCentroids = useSim((s) => s.manualCentroids);
+  const manualMode = useSim((s) => s.algorithmId === 'kmeans' && s.params.kmeans.init === 'manual');
+  const { addCentroid, moveCentroid, removeCentroid } = useSim.getState();
+  const placing = manualMode && tool === 'centroid';
 
   const svgRef = useRef<SVGSVGElement>(null);
   const press = useRef<{ timer: number; fired: boolean } | null>(null);
+  /** 중심점 끌기 상태 (놓을 때까지는 화면에만 반영) */
+  const [drag, setDrag] = useState<{
+    index: number;
+    start: Point;
+    p: Point;
+    moved: boolean;
+  } | null>(null);
+  const pendingAdd = useRef(false);
+
+  const nearestCentroid = (p: Point): number => {
+    let best = -1;
+    let bestD = CENTROID_HIT_RADIUS * CENTROID_HIT_RADIUS;
+    manualCentroids.forEach((c, i) => {
+      const d = (c.x - p.x) ** 2 + (c.y - p.y) ** 2;
+      if (d <= bestD) {
+        bestD = d;
+        best = i;
+      }
+    });
+    return best;
+  };
 
   const toData = (e: React.PointerEvent | React.MouseEvent): Point | null => {
     const svg = svgRef.current;
@@ -146,10 +198,59 @@ export function ScatterPlot() {
     return { x, y };
   };
 
+  const toDataClamped = (e: React.PointerEvent): Point | null => {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    const size = Math.min(rect.width, rect.height);
+    const ox = rect.left + (rect.width - size) / 2;
+    const oy = rect.top + (rect.height - size) / 2;
+    const clamp = (v: number) => Math.min(0.995, Math.max(0.005, v));
+    return { x: clamp((e.clientX - ox) / size), y: clamp((e.clientY - oy) / size) };
+  };
+
+  // --- 중심점 직접 놓기 모드 ---
+  const onCentroidDown = (e: React.PointerEvent, p: Point) => {
+    const hit = nearestCentroid(p);
+    if (hit >= 0) {
+      svgRef.current?.setPointerCapture?.(e.pointerId);
+      setDrag({ index: hit, start: manualCentroids[hit], p: manualCentroids[hit], moved: false });
+    } else {
+      pendingAdd.current = true;
+    }
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!drag) return;
+    const p = toDataClamped(e);
+    if (!p) return;
+    const moved = drag.moved || Math.hypot(p.x - drag.start.x, p.y - drag.start.y) > 0.01;
+    setDrag({ ...drag, p, moved });
+  };
+
+  const onCentroidUp = (e: React.PointerEvent) => {
+    if (drag) {
+      // 끌었으면 옮기고, 제자리에서 눌렀다 떼면 지우기
+      if (drag.moved) moveCentroid(drag.index, drag.p);
+      else removeCentroid(drag.index);
+      setDrag(null);
+      return;
+    }
+    if (pendingAdd.current) {
+      pendingAdd.current = false;
+      const p = toData(e);
+      if (p) addCentroid(p);
+    }
+  };
+
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
     const p = toData(e);
     if (!p) return;
+    if (placing) {
+      onCentroidDown(e, p);
+      return;
+    }
     // 길게 누르면 지우기 (터치 기기용)
     const state = { timer: 0, fired: false };
     state.timer = window.setTimeout(() => {
@@ -160,6 +261,10 @@ export function ScatterPlot() {
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
+    if (placing) {
+      onCentroidUp(e);
+      return;
+    }
     const state = press.current;
     press.current = null;
     if (!state) return;
@@ -174,12 +279,19 @@ export function ScatterPlot() {
   const cancelPress = () => {
     if (press.current) window.clearTimeout(press.current.timer);
     press.current = null;
+    pendingAdd.current = false;
   };
 
   const onContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     const p = toData(e);
-    if (p) removeNear(p, ERASE_RADIUS);
+    if (!p) return;
+    if (placing) {
+      const hit = nearestCentroid(p);
+      if (hit >= 0) removeCentroid(hit);
+      return;
+    }
+    removeNear(p, ERASE_RADIUS);
   };
 
   const anim = Math.min(450, (BASE_INTERVAL / speed) * 0.7);
@@ -191,16 +303,20 @@ export function ScatterPlot() {
     <div className={styles.wrap}>
       <svg
         ref={svgRef}
-        className={`${styles.svg} ${styles[`tool_${tool}`]}`}
+        className={`${styles.svg} ${styles[`tool_${placing ? 'centroid' : tool === 'centroid' ? 'add' : tool}`]}`}
         viewBox={`0 0 ${S} ${S}`}
         preserveAspectRatio="xMidYMid meet"
         style={{ ['--anim' as string]: `${anim}ms` }}
         role="img"
         aria-label={`산점도: 점 ${points.length}개. ${step?.message ?? ''}`}
         onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerLeave={cancelPress}
-        onPointerCancel={cancelPress}
+        onPointerCancel={() => {
+          cancelPress();
+          setDrag(null);
+        }}
         onContextMenu={onContextMenu}
       >
         <rect className={styles.bg} x={0} y={0} width={S} height={S} rx={8} />
@@ -247,10 +363,30 @@ export function ScatterPlot() {
         ))}
 
         {step?.centroids?.map((c, i) => (
-          <Centroid key={i} p={c} label={i} />
+          <Centroid
+            key={i}
+            // 시작 단계에서 중심을 끄는 중이면 ✕도 함께 움직임
+            p={
+              drag?.index === i && (step.kind === 'init' || step.kind === 'await-manual')
+                ? drag.p
+                : c
+            }
+            label={i}
+          />
         ))}
 
-        {points.length === 0 && (
+        {manualMode &&
+          manualCentroids.map((c, i) => (
+            <CentroidPin
+              key={`pin${i}`}
+              p={drag?.index === i ? drag.p : c}
+              index={i}
+              editable={placing}
+              dragging={drag?.index === i}
+            />
+          ))}
+
+        {points.length === 0 && !placing && (
           <text x={S / 2} y={S / 2} className={styles.emptyText}>
             여기를 눌러 점을 찍어 보세요
           </text>

@@ -149,3 +149,46 @@
     transition: none;
   }
 }
+
+/* --- K-Means 중심점 직접 놓기 --- */
+.tool_centroid {
+  cursor: copy;
+}
+
+.pin {
+  pointer-events: none;
+}
+
+.pinEditable {
+  pointer-events: visiblePainted;
+  cursor: grab;
+}
+
+.pinDragging {
+  cursor: grabbing;
+}
+
+.pinRing {
+  fill: rgba(255, 255, 255, 0.35);
+  stroke-width: 4;
+  stroke-dasharray: 9 6;
+}
+
+.pinDragging .pinRing {
+  stroke-width: 6;
+  fill: rgba(255, 255, 255, 0.6);
+}
+
+.pinBadge {
+  stroke: var(--surface);
+  stroke-width: 3;
+}
+
+.pinText {
+  fill: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}

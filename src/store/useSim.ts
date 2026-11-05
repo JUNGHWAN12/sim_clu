@@ -4,12 +4,15 @@ import type { ParamValues, Point, Step } from '../algorithms/types';
 import { generateDataset, spray, type DatasetConfig } from '../data/generators';
 import { createRng } from '../data/random';
 
-export type Tool = 'add' | 'spray' | 'erase';
+/** 'centroid' = K-Means 중심점 직접 놓기 */
+export type Tool = 'add' | 'spray' | 'erase' | 'centroid';
 
 export const SPEEDS = [0.25, 0.5, 1, 2, 4, 8, 16];
 /** 1배속에서 한 단계에 걸리는 시간(ms) */
 export const BASE_INTERVAL = 900;
 export const MAX_TOTAL_POINTS = 1500;
+/** 중심점을 누르거나 끌 수 있는 거리 (데이터 좌표) */
+export const CENTROID_HIT_RADIUS = 0.03;
 
 interface SimState {
   dataset: DatasetConfig;
@@ -17,6 +20,8 @@ interface SimState {
   algorithmId: string;
   params: Record<string, ParamValues>;
   runSeed: number;
+  /** K-Means '직접 지정' 초기화에서 사용자가 놓은 중심점 */
+  manualCentroids: Point[];
   steps: Step[];
   /** 점이 너무 많아 실행할 수 없을 때의 안내 */
   blocked: string | null;
@@ -37,6 +42,10 @@ interface SimState {
   setAlgorithm: (id: string) => void;
   setParam: (key: string, value: number | string | boolean) => void;
   rerun: () => void;
+  addCentroid: (p: Point) => void;
+  moveCentroid: (index: number, p: Point) => void;
+  removeCentroid: (index: number) => void;
+  clearCentroids: () => void;
 
   play: () => void;
   pause: () => void;
@@ -64,6 +73,7 @@ export function runAlgorithm(
   algorithmId: string,
   params: ParamValues,
   seed: number,
+  manualCentroids: Point[] = [],
 ): RunResult {
   const algo = ALGORITHM_MAP[algorithmId];
   if (points.length > algo.maxPoints) {
@@ -74,7 +84,7 @@ export function runAlgorithm(
     };
   }
   const steps: Step[] = [];
-  const gen = algo.run(points, params, createRng(seed));
+  const gen = algo.run(points, params, createRng(seed), { manualCentroids });
   for (let r = gen.next(); !r.done; r = gen.next()) {
     steps.push(r.value);
     if (steps.length >= MAX_STEPS) return { steps, blocked: null, truncated: true };
@@ -98,7 +108,13 @@ export const useSim = create<SimState>((set, get) => {
   const recompute = (patch: Partial<SimState>, keepEnd = false) => {
     const s = { ...get(), ...patch };
     const wasAtEnd = get().steps.length > 0 && get().stepIndex === get().steps.length - 1;
-    const result = runAlgorithm(s.points, s.algorithmId, s.params[s.algorithmId], s.runSeed);
+    const result = runAlgorithm(
+      s.points,
+      s.algorithmId,
+      s.params[s.algorithmId],
+      s.runSeed,
+      s.manualCentroids,
+    );
     set({
       ...patch,
       ...result,
@@ -113,6 +129,7 @@ export const useSim = create<SimState>((set, get) => {
     algorithmId: 'kmeans',
     params: initialParams,
     runSeed: 1,
+    manualCentroids: [],
     ...initialRun,
     stepIndex: 0,
     isPlaying: false,
@@ -140,15 +157,34 @@ export const useSim = create<SimState>((set, get) => {
       if (kept.length !== get().points.length) recompute({ points: kept });
     },
     clearPoints: () => recompute({ points: [] }),
-    setAlgorithm: (id) => recompute({ algorithmId: id }),
+    setAlgorithm: (id) => {
+      const tool = get().tool === 'centroid' ? 'add' : get().tool;
+      recompute({ algorithmId: id, tool });
+    },
     setParam: (key, value) => {
-      const { params, algorithmId } = get();
-      recompute(
-        { params: { ...params, [algorithmId]: { ...params[algorithmId], [key]: value } } },
-        true,
-      );
+      const { params, algorithmId, manualCentroids, tool } = get();
+      const next = { ...params[algorithmId], [key]: value };
+      const patch: Partial<SimState> = { params: { ...params, [algorithmId]: next } };
+      if (algorithmId === 'kmeans') {
+        // 직접 지정을 고르면 바로 중심 놓기 모드로, 다른 방식으로 바꾸면 해제
+        if (key === 'init')
+          patch.tool = value === 'manual' ? 'centroid' : tool === 'centroid' ? 'add' : tool;
+        // K를 줄이면 넘치는 중심점은 버림
+        if (key === 'k') patch.manualCentroids = manualCentroids.slice(0, Number(value));
+      }
+      recompute(patch, true);
     },
     rerun: () => recompute({ runSeed: get().runSeed + 1 }),
+    addCentroid: (p) => {
+      const { manualCentroids, params } = get();
+      if (manualCentroids.length >= Number(params.kmeans.k)) return;
+      recompute({ manualCentroids: [...manualCentroids, p] });
+    },
+    moveCentroid: (index, p) =>
+      recompute({ manualCentroids: get().manualCentroids.map((c, i) => (i === index ? p : c)) }),
+    removeCentroid: (index) =>
+      recompute({ manualCentroids: get().manualCentroids.filter((_, i) => i !== index) }),
+    clearCentroids: () => recompute({ manualCentroids: [] }),
 
     play: () => {
       const { stepIndex, steps } = get();
